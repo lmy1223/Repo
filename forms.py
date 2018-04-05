@@ -32,3 +32,12 @@ class RegistrationForm(FlaskForm):
         DataRequired(), EqualTo('password2', message='Passwords must match.')])
     password2 = PasswordField('Confirm password', validators=[DataRequired()])
     submit = SubmitField('注册')
+
+
+class UploadFile(FlaskForm):
+    # exception_name = StringField('exception_name', validators=[DataRequired(), Length(1, 45)])
+    # exception_desc = StringField('exception_desc', validators=[DataRequired(), Length(1, 500)])
+    # exception_example = StringField('exception_example', validators=[DataRequired(), Length(1, 200)])
+    # hit = StringField('hit', validators=[DataRequired()], default=0)
+    submit = SubmitField(u'提交')
+
