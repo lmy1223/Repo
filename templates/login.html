@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Exception query system - Login{% endblock %}
+{% block page_content %}
+<div class="page-header" style="text-align: center">
+    <h1>请输入登录信息</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-md-offset-3 col-sm-10">
+         <div class="form-group form-group-lg">
+            <form class="form-signin" role="form" method='POST' action="{{url_for('login') }}">
+                <input type="username" name="username" class="form-control" placeholder="username" required autofocus>
+                <input type="password" name="password" class="form-control" placeholder="Password" required>
+                <button class="btn btn-lg btn-primary btn-block" type="submit"> 登录 </button>
+                <h4 class="form-signin-heading" style="text-align: center">新用户，请点击
+                    <a href="{{ url_for('register') }}"> 注册</a>
+                </h4>
+            </form>
+          </div>
+    </div>
+</div>
+{% endblock %}
