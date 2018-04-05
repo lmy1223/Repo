@@ -1,0 +1,38 @@
+{% extends "bootstrap/base.html" %}
+
+{% block title %} Lmy's exception query system ! {% endblock %}
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/bootstrap.css">
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+</head>
+{% block navbar %}
+    <nav class="navbar navbar-inverse container">
+        <div class="navbar-header"> <a class="navbar-brand" href="{{ url_for('show_exception_list') }}">Exception query system</a> </div>
+        <!-- logout links -->
+        {% if "logged_in" in session %}
+        <ul class="nav navbar-nav pull-right">
+            <li><a class="btn" href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    {% endif %}
+    </nav>
+
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <!-- flash message -->
+        {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">close</span></button>
+            {{ message }}
+        </div>
+        {% endfor %}
+        <!-- body block -->
+        {% block page_content %} {% endblock %}
+
+    </div>
+{% endblock %}

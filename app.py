@@ -1,27 +1,42 @@
-#!/usr/bin/python
-# -*- coding: UTF-8 -*-
+# coding: utf-8
 
 from __future__ import unicode_literals
 
+import hashlib
+import time
+from upload_file import data
 import pymysql
 from flask import (Flask, render_template, g, session, redirect, url_for,
-                   request, flash)
+                   request, flash, send_from_directory)
 from flask_bootstrap import Bootstrap
+from flask_login import login_required,current_user
 from werkzeug.exceptions import abort
+from flask_uploads import DATA, UploadSet, configure_uploads, ALL, IMAGES, DOCUMENTS, ARCHIVES
+from werkzeug.utils import secure_filename
 
-from forms import InsertExceptionListForm, ModifyExceptionListForm, RegistrationForm
+from forms import InsertExceptionListForm,UploadFile, ModifyExceptionListForm, RegistrationForm
+import csv
+import os
+
 
 SECRET_KEY = 'key'
+
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 app.secret_key = SECRET_KEY
+UPLOAD_FOLDER = r'xxxx'
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif','csv'])
+# files = UploadSet('files', ALL)
+# app.config['UPLOADS_DEFAULT_DEST'] = 'uploads'
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 def connect_db():
     """Returns a new connection to the database."""
     return pymysql.connect(host='127.0.0.1',
                            user='root',
-                           passwd='xxxxxx',
+                           passwd='xxx',
                            db='exception',
                            charset="utf8")
 
@@ -46,12 +61,13 @@ def show_exception_list():
 
     form = InsertExceptionListForm()
     if request.method == 'GET':
-        sql = 'SELECT exceptionId,exceptionName,exceptionDesc,exceptionExample FROM exception.exception;'
+        sql = 'SELECT exceptionName,exceptionDesc,exceptionExample,hit FROM exception.exception;'
         with g.db as cur:
             cur.execute(sql)
-            exception_list = [dict(exceptionId=row[0], exceptionName=row[1], exceptionDesc=row[2], exceptionExample=row[3])
+            exception_list = [dict(exceptionName=row[0], exceptionDesc=row[1], exceptionExample=row[2], hit=row[3])
                          for row in cur.fetchall()]
         return render_template('index.html', exception_list=exception_list, form=form)
+
     else:
         if form.validate_on_submit():
             exception_name = form.exception_name.data
@@ -67,15 +83,47 @@ def show_exception_list():
         else:
             flash(form.errors)
         return redirect(url_for('show_exception_list'))
+        # file = request.files['file']
+        # print(file)
+        # if file:
+        #     filename = secure_filename(file.filename)
+        #     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        #     return redirect(url_for('upload_file',
+        #                             filename=filename))
+    # data_form = UploadFile()
+    # if data_form.validate_on_submit():
+    #     filename = request.form.get('filename')
+    #     print(filename)
+    #     if not filename:
+    #         filename = ''
+    #     filename = open(os.getcwd() + '/upload_file/data/' + filename, 'r')
+    #     exception = []
+    #     for row in csv.reader(filename):
+    #         exception.append(row)
+    #     filename.close()
+    #     with g.db as cur:
+    #         sql = """insert into exception(`exceptionName`, `exceptionDesc`,
+    #                                         `exceptionExample`,`hit`) values (%s, %s, %s, %s)"""
+    #         cur.executemany(sql, exception)
+    #         flash('add a exception list！')
+    #     return render_template('index.html', filename=filename, form=form)
+    # return redirect(url_for('show_exception_list'))
+
+#
+# @app.route('/', methods=['GET', 'POST'])
+# def upload_files():
 
 
 @app.route('/delete')
 def delete_exception_list():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
     id = request.args.get('id', None)
     if id is None:
         abort(404)
     else:
-        sql = 'delete from exception where id = {0}'.format(id)
+        sql = 'delete from exception where exceptionId = {0}'.format(id)
         with g.db as cur:
             cur.execute(sql)
         flash('delete a exception ！')
@@ -84,6 +132,9 @@ def delete_exception_list():
 
 @app.route('/modify', methods=['GET', 'POST'])
 def modify_exception_list():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
     id = request.args.get('id', None)
     form = ModifyExceptionListForm()
     if request.method == 'GET':
@@ -159,6 +210,62 @@ def logout():
     session.pop('logged_in', None)
     flash('成功登出系统 !')
     return redirect(url_for('login'))
+
+
+@app.route('/upload_file', methods=['GET', 'POST'])
+def upload_file():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
+    file = request.files['file']
+    # 生成的filename，与secure_filename(file.filename)不同
+    # filename = ''
+    # if file.filename != '':
+    #     time_now = str(time.time())
+    #     filename = hashlib.md5(time_now.encode('utf8')).hexdigest()[:15] + '.'
+    #     extend_one = os.path.splitext(secure_filename(file.filename))[1][1:].lower()
+    #     extend_two = os.path.splitext(secure_filename(file.filename))[0].lower()
+    #     # 获取文件扩展名
+    #     if extend_one in DATA or extend_two in DATA:
+    #         if extend_one in DATA:
+    #             filename += extend_one
+    #         else:
+    #             filename += extend_two
+    #         # data.save(file, name=filename)
+    # session['filename'] = filename
+    # return filename
+
+    exception = []
+    with open(os.getcwd() + '\\upload_file\\data\\' + file.filename, 'r') as f:
+        for row in csv.reader(f):
+            exception.append(row)
+    print(exception)
+    with g.db as cur:
+        sql = """insert into exception(`exceptionName`, `exceptionDesc`,
+                                        `exceptionExample`) values (%s, %s, %s)"""
+        cur.executemany(sql, exception)
+        flash('add a exception list！')
+    return render_template('index.html')
+    return redirect(url_for('show_exception_list'))
+
+
+@app.route('/exception_search_result/<searchText>', methods=['GET', 'POST'])
+@app.route('/exception_search_result/<searchText><int:page>', methods=['GET', 'POST'])
+def exception_search_result(page=1, searchText=''):
+    if request.args.get('orderBy'):
+        orderBy = request.args.get('orderBy')
+    else:
+        orderBy = 'all'
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    sql = '''SELECT exceptionId,exceptionName,exceptionDesc,exceptionExample FROM exception.exception 
+          WHERE exceptionName = '{0}' '''.format(searchText)
+    with g.db as cur:
+        cur.execute(sql)
+        exception_list = [dict(exceptionId=row[0], exceptionName=row[1], exceptionDesc=row[2], exceptionExample=row[3])
+                          for row in cur.fetchall()]
+    return render_template('searchResult.html', exception_list=exception_list,
+                           searchText=searchText, orderBy=orderBy)
 
 
 if __name__ == '__main__':
