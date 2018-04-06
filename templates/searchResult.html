@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/bootstrap.css">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+</head>
+<section class="exceptionlist content w100 mw1000">
+<body>
+    <form class="navbar-form navbar-left" role="search">
+      <div class="form-group">
+        <input type="text" class="form-control" placeholder="Search" name="searchResult">
+      </div>
+      <!--<button type="submit" class="btn btn-default">Search</button>-->
+     <i class="iconfont search">Search</i>
+    </form>
+    <table class="table table-hover">
+        <thead>
+            <th class="active">Num</th>
+            <th class="active">exceptionName</th>
+            <th class="active">exceptionDesc</th>
+            <th class='active'>exceptionExample</th>
+            <th class="active">hit</th>
+        </thead>
+
+        <div class="content" style="width: 1050px;min-height: 400px;" id="exception" key="{{ searchText }}">
+        <tbody>
+            {% for exception in exception_list %}
+
+                <!-- tr -->
+                <tr class="success">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ exception['exceptionName'] }}</td>
+                    <td>{{ exception['exceptionDesc'] }}</td>
+                    <td>{{ exception['exceptionExample'] }}</td>
+                    <td>{{ exception['hit'] }}</td>
+                    <td> <a href="{{ url_for('delete_exception_list', id=exception['exceptionId']) }}" class="btn btn-danger" role ="button">删除</a>
+                         <a href="{{ url_for('modify_exception_list', id=exception['exceptionId']) }}" class="btn btn-success" role ="button">修改</a>
+                    </td>
+                </tr>
+            {% endfor %}
+
+        </tbody>
+        </div>
+    </table>
+</body>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static',filename='js/searchhigh.js') }}"></script>
+    <script type="text/javascript">
+    $(function(){
+        //搜索内容高亮
+        var key=$('section.exception .c-bottom .content').attr('key');
+        $('section.exception .c-bottom .content').highlight(key)
+    })
+    </script>
+{% endblock %}

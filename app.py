@@ -9,15 +9,14 @@ import pymysql
 from flask import (Flask, render_template, g, session, redirect, url_for,
                    request, flash, send_from_directory)
 from flask_bootstrap import Bootstrap
-from flask_login import login_required,current_user
+from flask_login import login_required, current_user
 from werkzeug.exceptions import abort
 from flask_uploads import DATA, UploadSet, configure_uploads, ALL, IMAGES, DOCUMENTS, ARCHIVES
 from werkzeug.utils import secure_filename
 
-from forms import InsertExceptionListForm,UploadFile, ModifyExceptionListForm, RegistrationForm
+from forms import InsertExceptionListForm, UploadFile, ModifyExceptionListForm, RegistrationForm
 import csv
 import os
-
 
 SECRET_KEY = 'key'
 
@@ -25,7 +24,7 @@ app = Flask(__name__)
 bootstrap = Bootstrap(app)
 app.secret_key = SECRET_KEY
 UPLOAD_FOLDER = r'xxxx'
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif','csv'])
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv'])
 # files = UploadSet('files', ALL)
 # app.config['UPLOADS_DEFAULT_DEST'] = 'uploads'
 
@@ -36,7 +35,7 @@ def connect_db():
     """Returns a new connection to the database."""
     return pymysql.connect(host='127.0.0.1',
                            user='root',
-                           passwd='xxx',
+                           passwd='123',
                            db='exception',
                            charset="utf8")
 
@@ -65,7 +64,7 @@ def show_exception_list():
         with g.db as cur:
             cur.execute(sql)
             exception_list = [dict(exceptionName=row[0], exceptionDesc=row[1], exceptionExample=row[2], hit=row[3])
-                         for row in cur.fetchall()]
+                              for row in cur.fetchall()]
         return render_template('index.html', exception_list=exception_list, form=form)
 
     else:
@@ -109,6 +108,7 @@ def show_exception_list():
     #     return render_template('index.html', filename=filename, form=form)
     # return redirect(url_for('show_exception_list'))
 
+
 #
 # @app.route('/', methods=['GET', 'POST'])
 # def upload_files():
@@ -141,8 +141,9 @@ def modify_exception_list():
         sql = 'SELECT exceptionId,exceptionName,exceptionDesc,exceptionExample FROM exception.exception;'
         with g.db as cur:
             cur.execute(sql)
-            exception_list = [dict(exceptionId=row[0], exceptionName=row[1], exceptionDesc=row[2], exceptionExample=row[3])
-                         for row in cur.fetchall()]
+            exception_list = [
+                dict(exceptionId=row[0], exceptionName=row[1], exceptionDesc=row[2], exceptionExample=row[3])
+                for row in cur.fetchall()]
         return render_template('modify.html', exception_list=exception_list, form=form)
     else:
         if form.validate_on_submit():
@@ -258,15 +259,18 @@ def exception_search_result(page=1, searchText=''):
         orderBy = 'all'
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    sql = '''SELECT exceptionId,exceptionName,exceptionDesc,exceptionExample FROM exception.exception 
-          WHERE exceptionName = '{0}' '''.format(searchText)
+    sql_one = '''UPDATE exception SET hit=hit+1 where exceptionName='{0}';'''.format(searchText)
+    sql_two = '''SELECT exceptionName,exceptionDesc,exceptionExample,hit FROM exception.exception 
+          WHERE exceptionName = '{0}'; '''.format(searchText)
     with g.db as cur:
-        cur.execute(sql)
-        exception_list = [dict(exceptionId=row[0], exceptionName=row[1], exceptionDesc=row[2], exceptionExample=row[3])
-                          for row in cur.fetchall()]
+        cur.execute(sql_one)
+        cur.execute(sql_two)
+        exception_list = [dict(exceptionName=row[0], exceptionDesc=row[1], exceptionExample=row[2],
+                               hit=row[3]) for row in cur.fetchall()]
     return render_template('searchResult.html', exception_list=exception_list,
                            searchText=searchText, orderBy=orderBy)
 
 
+
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000)
+    app.run(host='127.0.0.1', port=8000)
