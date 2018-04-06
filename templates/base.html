@@ -10,6 +10,8 @@
 {% block navbar %}
     <nav class="navbar navbar-inverse container">
         <div class="navbar-header"> <a class="navbar-brand" href="{{ url_for('show_exception_list') }}">Exception query system</a> </div>
+        <div class="navbar-header"> <a class="navbar-brand" href="{{ url_for('show_exception_count') }}">Exception Count </a> </div>
+
         <!-- logout links -->
         {% if "logged_in" in session %}
         <ul class="nav navbar-nav pull-right">

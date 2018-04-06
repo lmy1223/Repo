@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Exception Count{% endblock %}
+<!--{% block page_content %}-->
+<!--<html lang="en" style="height: 100%;">-->
+
+<head>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/echarts.min.js"></script>
+</head>
+
+<body >
+    <div id="main" style="width: 900px;height:500px;"></div>
+    <!--<div id="main" style="width: 100%;height:100%;"></div>-->
+<script type="text/javascript">
+    // 基于准备好的dom，初始化echarts实例
+    var myChart = echarts.init(document.getElementById('main'));
+    var arr1=[],arr2=[];
+    // function arrTest(){
+    $(function (){
+        $.ajax({
+            type:'post',
+            url:'/exception_count',
+            dateType:'json',
+            success:function(exception_list) {
+                // if (returnData.status==1){
+                if (exception_list) {
+                for (var i = 0; i < exception_list.length; i++) {
+                    arr1.push(exception_list[i].exceptionName);
+                    // console.log(exception_list[i].exceptionName);
+                    arr2.push(exception_list[i].hit);
+                    }
+                }
+        console.log(arr1)
+                    var option = {
+                        title: {
+                            text: '异常点击量的统计'
+                            },
+                        tooltip: {},
+                        legend: {
+                            data:['异常点击量']
+                            },
+                        xAxis: [
+                        {
+                            type : 'category',
+                            data : arr1
+                            }
+                        ],
+                        yAxis: [
+                        {
+                            type : 'value'
+                            }
+                        ],
+                        series: [{
+                            name: '异常点击量',
+                            type: 'bar',
+                            data: arr2
+                            }]
+                        };
+                    // 使用刚指定的配置项和数据显示图表。
+                    myChart.setOption(option);
+                }
+            }
+        )
+    })
+</script>
+
+</body>
+
+{% endblock %}

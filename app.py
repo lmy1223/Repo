@@ -2,12 +2,12 @@
 
 from __future__ import unicode_literals
 
-import hashlib
-import time
-from upload_file import data
+# import hashlib
+# import time
+# from upload_file import data
 import pymysql
 from flask import (Flask, render_template, g, session, redirect, url_for,
-                   request, flash, send_from_directory)
+                   request, flash, jsonify)
 from flask_bootstrap import Bootstrap
 from flask_login import login_required, current_user
 from werkzeug.exceptions import abort
@@ -23,12 +23,12 @@ SECRET_KEY = 'key'
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 app.secret_key = SECRET_KEY
-UPLOAD_FOLDER = r'xxxx'
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv'])
+# UPLOAD_FOLDER = r'xxxx'
+# ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv'])
 # files = UploadSet('files', ALL)
 # app.config['UPLOADS_DEFAULT_DEST'] = 'uploads'
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 def connect_db():
@@ -271,6 +271,48 @@ def exception_search_result(page=1, searchText=''):
                            searchText=searchText, orderBy=orderBy)
 
 
+@app.route('/exception_count', methods=['GET', 'POST'])
+def exception_count():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    sql = '''SELECT exceptionName,exceptionDesc,exceptionExample,hit FROM exception 
+               ORDER BY hit LIMIT 5'''
+    # count_exception_name = []
+    # count_exception_desc = []
+    # returnData = {}
+    with g.db as cur:
+        cur.execute(sql)
+        # exception_list = cur.fetchall()
+        # for item in exception_list:
+        #     exception_name=item[0]
+        #     exception_desc = item[1]
+        #     hit = item[3]
+        #     count_exception_name.append({"name": exception_name, "value": hit})
+        #     count_exception_desc.append({"name": exception_name, "value": exception_desc})
+
+        exception_list = [dict(exceptionName=row[0], exceptionDesc=row[1], exceptionExample=row[2],
+                               hit=row[3]) for row in cur.fetchall()]
+        print(exception_list)
+        return jsonify(exception_list)
+        # 判断是否为空，是否又查询到数据
+        # if exception_list:
+        #     returnData['status']=1
+        # else:
+        #     returnData['status'] = 0
+        # returnData['count_exception_name'] = count_exception_name
+        # # returnData['count_exception_desc'] = count_exception_desc
+        # print(returnData.values()[1])
+        # for i in returnData.values()[1]:
+        #     print(i.values())
+        # return jsonify(returnData)
+    # return render_template('count.html')
+
+
+@app.route('/show_exception_count', methods=['GET', 'POST'])
+def show_exception_count():
+
+    return render_template('count.html')
+
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8000)
+    app.run(host='127.0.0.1', port=5000)
